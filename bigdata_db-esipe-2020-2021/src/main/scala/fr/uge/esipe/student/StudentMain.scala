@@ -106,7 +106,7 @@ class IndexedFileStudentKeyValueStore(directory: String) extends StudentKeyValue
         file.close()
       }
 
-    data.groupBy(_._1).mapValues(_.head._2)
+    data.groupBy(_._1).view.mapValues(_.head._2).toMap
   }
 
   //  case class Index(id: String, position: Long)
@@ -166,7 +166,7 @@ class FileStudentKeyValueStore(directory: String) extends StudentKeyValueStore {
         file.close()
       }
 
-    studentData.groupBy(_.id).mapValues(_.head)
+    studentData.groupBy(_.id).view.mapValues(_.head).toMap
   }
 
   override def find(id: String): Try[Student] = {
