@@ -1,6 +1,6 @@
 package fr.uge.esipe.stream.net
 
-import fr.uge.esipe.stream.net.Request.{Echo, Push}
+import fr.uge.esipe.stream.net.Request.{Echo, Produce}
 import java.nio.ByteBuffer
 import java.nio.channels.ByteChannel
 import org.scalatest.funsuite.AnyFunSuiteLike
@@ -9,7 +9,7 @@ class RequestTest extends AnyFunSuiteLike {
 
   test("Echo serde") {
     val resquest = Echo("hello world!")
-    val channel = new MockByteChannel
+    val channel  = new MockByteChannel
 
     Request.write(channel, resquest)
     channel.buffer.rewind()
@@ -19,14 +19,14 @@ class RequestTest extends AnyFunSuiteLike {
     assert(result === Right(Echo("hello world!")))
   }
 
-  test("Push serde") {
-    val resquest = Push("user", "123AG".getBytes(), "John".getBytes())
-    val channel = new MockByteChannel
+  test("Produce serde") {
+    val resquest = Produce("user", "123AG".getBytes(), "John".getBytes())
+    val channel  = new MockByteChannel
 
     Request.write(channel, resquest)
     channel.buffer.rewind()
 
-    val Right(Push(topic, key, value)) = Request.read(channel)
+    val Right(Produce(topic, key, value)) = Request.read(channel)
 
     assert(topic === "user")
     assert(new String(key) === "123AG")
@@ -39,9 +39,9 @@ class MockByteChannel extends ByteChannel {
   val buffer: ByteBuffer = ByteBuffer.allocate(1024)
 
   override def read(dst: ByteBuffer): Int = {
-    val start = dst.position()
+    val start     = dst.position()
     val tmpBuffer = buffer.duplicate().slice().limit(dst.limit())
-    val end = dst.put(tmpBuffer).position()
+    val end       = dst.put(tmpBuffer).position()
     buffer.position(end)
 
     end - start
@@ -49,7 +49,7 @@ class MockByteChannel extends ByteChannel {
 
   override def write(src: ByteBuffer): Int = {
     val start = buffer.position()
-    val end = buffer.put(src).position()
+    val end   = buffer.put(src).position()
 
     end - start
   }

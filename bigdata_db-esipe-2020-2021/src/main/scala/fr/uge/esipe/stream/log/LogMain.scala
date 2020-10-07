@@ -12,12 +12,16 @@ object LogMain {
 
     broker.createTopic("my-topic", 3)
 
-    //    produce(broker)
+//        produce(broker)
     consume(broker)
   }
 
   def consume(broker: Broker): Unit = {
-    val records = broker.poll("my-topic", 0, 0)
+    val records = broker.poll(
+      topic = "my-topic",
+      partitionId = 2,
+      offset = 0
+    )
 
     for (record <- records) {
       val key   = new String(record.key)
@@ -32,9 +36,9 @@ object LogMain {
       val key = s"key${i % 10}"
 
       val record = ProducerRecord(
-        "my-topic",
-        key.getBytes(),
-        UUID.randomUUID().toString.getBytes()
+        topic = "my-topic",
+        key = key.getBytes(),
+        value = UUID.randomUUID().toString.getBytes()
       )
 
       broker.send(record)

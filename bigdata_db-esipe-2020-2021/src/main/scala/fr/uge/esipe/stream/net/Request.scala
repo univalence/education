@@ -20,9 +20,9 @@ sealed trait RequestError
 object Request {
   val magic: Short = 0xf5
 
-  val ECHO_OPID: Short  = 0x01
-  val PUSH_OPID: Short  = 0x02
-  val FETCH_OPID: Short = 0x03
+  val ECHO_OPID: Short    = 0x01
+  val PRODUCE_OPID: Short = 0x02
+  val FETCH_OPID: Short   = 0x03
 
   val HEADER_SCHEMA: Schema = Schema(
     Field.Int16("magic"),
@@ -34,7 +34,7 @@ object Request {
     Field.Str("message")
   )
 
-  val PUSH_SCHEMA: Schema = Schema(
+  val PRODUCE_SCHEMA: Schema = Schema(
     Field.Str("topic"),
     Field.ByteArray("key"),
     Field.ByteArray("value")
@@ -60,25 +60,25 @@ object Request {
       } yield Echo(message)
   }
 
-  case class Push(topic: String, key: Array[Byte], value: Array[Byte])
-    extends Request {
-    override val opId: Short    = PUSH_OPID
-    override val schema: Schema = PUSH_SCHEMA
+  case class Produce(topic: String, key: Array[Byte], value: Array[Byte])
+      extends Request {
+    override val opId: Short    = PRODUCE_OPID
+    override val schema: Schema = PRODUCE_SCHEMA
 
     override def toStruct: STRUCT =
       STRUCT(schema, Array(topic, key, value))
   }
-  object Push {
-    def fromStruct(struct: STRUCT): Option[Push] =
+  object Produce {
+    def fromStruct(struct: STRUCT): Option[Produce] =
       for {
         topic <- struct.get("topic").map(_.asInstanceOf[String])
         key   <- struct.get("key").map(_.asInstanceOf[Array[Byte]])
         value <- struct.get("value").map(_.asInstanceOf[Array[Byte]])
-      } yield Push(topic, key, value)
+      } yield Produce(topic, key, value)
   }
 
   case class Fetch(topic: String, partitionId: Short, offset: Int)
-    extends Request {
+      extends Request {
     override val opId: Short    = FETCH_OPID
     override val schema: Schema = FETCH_SCHEMA
 
@@ -119,7 +119,7 @@ object Request {
     val headerBuffer  = HEADER_SCHEMA.createBuffer(defaultStruct)
     channel.read(headerBuffer)
     headerBuffer.rewind()
-    val headerStruct = HEADER_SCHEMA.read(headerBuffer)
+    val headerStruct: STRUCT = HEADER_SCHEMA.read(headerBuffer)
 
     val magicPart = headerStruct.get("magic").map(_.asInstanceOf[Short])
     val operationId =
@@ -139,12 +139,15 @@ object Request {
         case ECHO_OPID =>
           val struct = ECHO_SCHEMA.read(buffer)
           Echo.fromStruct(struct).toRight(CorruptedData)
-        case PUSH_OPID =>
-          val struct = PUSH_SCHEMA.read(buffer)
-          Push.fromStruct(struct).toRight(CorruptedData)
+
+        case PRODUCE_OPID =>
+          val struct = PRODUCE_SCHEMA.read(buffer)
+          Produce.fromStruct(struct).toRight(CorruptedData)
+
         case FETCH_OPID =>
           val struct = FETCH_SCHEMA.read(buffer)
           Fetch.fromStruct(struct).toRight(CorruptedData)
+
         case _ =>
           Left(UnknownOperation)
       }

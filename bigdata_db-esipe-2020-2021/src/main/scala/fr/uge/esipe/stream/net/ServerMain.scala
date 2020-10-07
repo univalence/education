@@ -1,18 +1,30 @@
 package fr.uge.esipe.stream.net
 
+import fr.uge.esipe.stream.log._
+import fr.uge.esipe.stream.net.Response.FetchRecord
 import java.net.InetSocketAddress
 import java.nio.channels.{ByteChannel, ServerSocketChannel}
+import java.nio.file.{Files, Paths}
 import scala.util.Using
 
 object ServerMain {
-  val inMemoryBroker = new InMemoryBroker(3)
+//  val inMemoryBroker = new InMemoryBroker(3)
+
+  val broker: Broker = {
+    val workDir = Paths.get("stream")
+    if (!workDir.toFile.exists()) Files.createDirectories(workDir)
+
+    new Broker(workDir)
+  }
 
   def main(args: Array[String]): Unit = {
     Using(ServerSocketChannel.open()) { serverSocketChannel =>
       serverSocketChannel.bind(new InetSocketAddress(19092))
+
       while (true) {
         Using(serverSocketChannel.accept()) { client =>
-          val requestOrError = readRequest(client)
+          val requestOrError: Either[RequestError, Request] =
+            readRequest(client)
           println(s"got $requestOrError")
 
           val response: Response =
@@ -33,16 +45,19 @@ object ServerMain {
       case Request.Echo(message) =>
         Response.Display(message)
 
-      case Request.Push(topic, k, v) =>
-        val (partitionId, offset) = inMemoryBroker.put(topic, k, v)
-        Response.PushOk(topic, partitionId.toShort, offset)
+      case Request.Produce(topic, k, v) =>
+        val record                = ProducerRecord(topic, k, v)
+        val (partitionId, offset) = broker.send(record)
+        Response.ProduceOk(topic, partitionId.toShort, offset)
 
       case Request.Fetch(topic, partitionId, offset) =>
-        val (k, v) = inMemoryBroker.get(topic, partitionId, offset)
+        val records = broker.poll(topic, partitionId, offset)
         Response.FetchOk(
           topic,
           partitionId,
-          List(Response.FetchRecord(offset, k, v))
+          records
+            .map(record => FetchRecord(record.offset, record.key, record.value))
+            .toList
         )
 
       case _ => Response.ServerError("unknown request")

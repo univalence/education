@@ -29,7 +29,7 @@ object Response {
     Field.Str("message")
   )
 
-  val PUSHOK_SCHEMA: Schema = Schema(
+  val PRODUCEOK_SCHEMA: Schema = Schema(
     Field.Str("topic"),
     Field.Int16("partition_id"),
     Field.Int32("offset")
@@ -66,21 +66,21 @@ object Response {
       } yield Display(message)
   }
 
-  case class PushOk(topic: String, partitionId: Short, offset: Int)
-    extends Response {
+  case class ProduceOk(topic: String, partitionId: Short, offset: Int)
+      extends Response {
     override val repId: Short   = 0x02
-    override val schema: Schema = PUSHOK_SCHEMA
+    override val schema: Schema = PRODUCEOK_SCHEMA
 
     override def toStruct: STRUCT =
       STRUCT(schema, Array(topic, partitionId, offset))
   }
-  object PushOk {
-    def fromStruct(struct: STRUCT): Option[PushOk] =
+  object ProduceOk {
+    def fromStruct(struct: STRUCT): Option[ProduceOk] =
       for {
         topic       <- struct.get("topic").map(_.asInstanceOf[String])
         partitionId <- struct.get("partition_id").map(_.asInstanceOf[Short])
         offset      <- struct.get("offset").map(_.asInstanceOf[Int])
-      } yield PushOk(topic, partitionId, offset)
+      } yield ProduceOk(topic, partitionId, offset)
 
   }
 
@@ -99,10 +99,10 @@ object Response {
   }
 
   case class FetchOk(
-                      topic: String,
-                      partitionId: Short,
-                      records: List[FetchRecord]
-                    ) extends Response {
+      topic: String,
+      partitionId: Short,
+      records: List[FetchRecord]
+  ) extends Response {
     override val repId: Short   = 0x03
     override val schema: Schema = FETCHOK_SCHEMA
 
@@ -201,12 +201,15 @@ object Response {
         case 0x01 =>
           val struct = DISPLAY_SCHEMA.read(buffer)
           Display.fromStruct(struct).getOrElse(CorruptedData)
+
         case 0x02 =>
-          val struct = PUSHOK_SCHEMA.read(buffer)
-          PushOk.fromStruct(struct).getOrElse(CorruptedData)
+          val struct = PRODUCEOK_SCHEMA.read(buffer)
+          ProduceOk.fromStruct(struct).getOrElse(CorruptedData)
+
         case 0x03 =>
           val struct = FETCHOK_SCHEMA.read(buffer)
           FetchOk.fromStruct(struct).getOrElse(CorruptedData)
+
         case _ =>
           UnknownResponse
       }
@@ -214,4 +217,3 @@ object Response {
   }
 
 }
-
