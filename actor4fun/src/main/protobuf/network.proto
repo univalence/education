@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package actor4fun.internal;
+
+import "google/protobuf/empty.proto";
+
+/**
+ * Reference on a remote actor.
+ *
+ * An actor reference is suppose to uniquely identify an actor over a
+ * network.
+ */
+message NetActorRef {
+  /** host endpoint. */
+  string host = 1;
+  /** port endpoint. */
+  int32 port = 2;
+  /** unique name for the host/port. */
+  string name = 3;
+}
+
+/**
+ * Exchange message over the network.
+ */
+message NetActorMessage {
+  NetActorRef sender = 1;
+  NetActorRef receiver = 2;
+  /**
+   * Serialized body of this message.
+   *
+   * This serialized form allows to transport data not defined in
+   * protobuf. Any kind of serializer can be used (Java
+   * serialization, Kryo, your own...). But it should the same on both
+   * ends of communication channel.
+   */
+  bytes payload = 3;
+}
+
+/**
+ * Acknowledgement that has to be sent by the receiver.
+ */
+message Ack {
+  bool isOk = 1;
+  string error = 2;
+}
+
+
+message ActorNames {
+  repeated string names = 1;
+}
+
+/**
+ * Interface of the remote actor to receive messages.
+ */
+service ActorEndPoint {
+  rpc receive (NetActorMessage) returns (Ack);
+  rpc actorNames (google.protobuf.Empty) returns (ActorNames);
+}
