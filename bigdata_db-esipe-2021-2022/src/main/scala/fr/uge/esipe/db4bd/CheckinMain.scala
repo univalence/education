@@ -14,8 +14,8 @@ object CheckinMain {
     RocksDB.loadLibrary()
 
     val filename =
-      "/Users/fsarradin/src/test/2021_06/mini_kafka/data/threetriangle/dataset_TIST2015_Checkins.txt"
-    Using(RocksDB.open("data/checkin")) { db =>
+      "data/threetriangle/checkins.txt"
+    Using(RocksDB.open("data/checkins")) { db =>
 //      Using(Source.fromFile(filename)) { file =>
 //        file
 //          .getLines()

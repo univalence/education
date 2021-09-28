@@ -10,7 +10,7 @@ object KeyValueStoreMain {
 
   def main(args: Array[String]): Unit = {
     val filename =
-      "/Users/fsarradin/src/test/2021_06/mini_kafka/data/threetriangle/dataset_TIST2015_Checkins.txt"
+      "data/threetriangle/checkins.txt"
 
     val db = new TreeKeyValueStore[(String, LocalDateTime), Checkin]
 
@@ -45,9 +45,9 @@ object KeyValueStoreMain {
     iterator.foreach(println)
   }
 
-  def loadVenues: Unit = {
+  def loadVenues(): Unit = {
     val filename =
-      "/Users/fsarradin/src/test/2021_06/mini_kafka/data/threetriangle/dataset_TIST2015_POIs.txt"
+      "data/threetriangle/venues.txt"
 
     val db = new MapKeyValueStore[String, Venue]
 

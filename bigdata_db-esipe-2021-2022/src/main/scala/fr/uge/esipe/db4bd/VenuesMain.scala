@@ -7,9 +7,9 @@ import org.rocksdb.RocksDB
 import scala.io.Source
 import scala.util.Using
 
-object RocksDBMain {
+object VenuesMain {
   def main(args: Array[String]): Unit = {
-    val filename = "/Users/fsarradin/src/test/2021_06/mini_kafka/data/threetriangle/dataset_TIST2015_POIs.txt"
+    val filename = "data/threetriangle/venues.txt"
 
     RocksDB.loadLibrary()
 
