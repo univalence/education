@@ -15,6 +15,8 @@ libraryDependencies ++= Seq(
   "com.lihaoyi"             %% "fastparse"                            % "2.2.2",
   "ch.qos.logback"           % "logback-core"                         % "1.2.3",
   "ch.qos.logback"           % "logback-classic"                      % "1.2.3",
+  "com.sparkjava"            % "spark-core"                           % "2.9.3",
+  "com.squareup.okhttp3"     % "okhttp"                               % "4.9.0",
   "org.scalatest"           %% "scalatest"                            % "3.2.9" % Test,
   "org.apache.kafka"         % "kafka-streams-test-utils"             % "2.8.0" % Test
 )
